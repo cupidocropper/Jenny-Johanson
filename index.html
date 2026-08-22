@@ -1,1 +1,142 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cupidocropper</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&family=Inter:wght@300;400&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body><header><a class="brand" href="#category=frontpage&page=1">Cupidocropper</a><nav><a data-cat="frontpage">frontpage</a><a data-cat="dots">Dots</a><a data-cat="soft">Soft</a></nav></header><main><div id="grid" class="grid"></div><div id="pages" class="pages"></div></main><div id="lightbox" class="lightbox" aria-hidden="true"><button class="close" aria-label="Close">×</button><button class="prev" aria-label="Previous">‹</button><img id="large" alt=""><button class="next" aria-label="Next">›</button></div><script src="images.js"></script><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cupidocropper</title>
+<meta name="description" content="Cupidocropper — by Jenny Johanson">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#eaeae4;color:#171717}
+body{font-family:Inter,Arial,sans-serif}
+header{padding:48px 30px 42px;text-align:center}
+.brand{font-family:"Cormorant Garamond",Georgia,serif;font-size:38px;font-weight:400;letter-spacing:.02em;text-decoration:none;color:inherit;display:block;line-height:1}
+.byline{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:300;letter-spacing:.08em;margin-top:10px;margin-bottom:28px}
+nav{display:flex;justify-content:center;gap:30px;font-size:12px;font-weight:300;letter-spacing:.04em}
+nav a{cursor:pointer;padding-bottom:4px;border-bottom:1px solid transparent}
+nav a.active{border-bottom-color:#555}
+main{max-width:760px;margin:0 auto 60px;padding:0 30px}
+.grid{display:grid;grid-template-columns:repeat(3,200px);gap:28px;justify-content:center}
+.tile{width:200px;height:200px;overflow:hidden;cursor:pointer;background:rgba(0,0,0,.025)}
+.tile img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}
+.tile:hover img{opacity:.82}
+.pages{text-align:center;margin-top:38px;font-size:11px;letter-spacing:.08em}
+.pages a{cursor:pointer;margin:0 5px}
+.pages a.active{text-decoration:underline}
+.lightbox{position:fixed;inset:0;background:rgba(234,234,228,.97);display:none;align-items:center;justify-content:center;z-index:10}
+.lightbox.open{display:flex}
+.lightbox img{max-width:82vw;max-height:86vh;object-fit:contain}
+.lightbox button{position:absolute;border:0;background:none;color:#222;font:300 36px Inter;cursor:pointer}
+.close{right:28px;top:18px}.prev{left:25px;top:50%}.next{right:25px;top:50%}
+@media(max-width:720px){
+  header{padding-top:34px}
+  .grid{grid-template-columns:repeat(2,minmax(0,200px))}
+  .tile{width:100%;height:auto;aspect-ratio:1}
+  .lightbox img{max-width:90vw}
+}
+@media(max-width:470px){
+  main{padding:0 18px}
+  .grid{grid-template-columns:repeat(2,1fr);gap:16px}
+  .brand{font-size:34px}
+  nav{gap:22px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="#category=frontpage&page=1">Cupidocropper</a>
+  <div class="byline">-by Jenny Johanson-</div>
+  <nav>
+    <a data-cat="frontpage">Frontpage</a>
+    <a data-cat="dots">Dots</a>
+    <a data-cat="soft">Soft</a>
+  </nav>
+</header>
+<main>
+  <div id="grid" class="grid"></div>
+  <div id="pages" class="pages"></div>
+</main>
+<div id="lightbox" class="lightbox" aria-hidden="true">
+  <button class="close" aria-label="Close">×</button>
+  <button class="prev" aria-label="Previous">‹</button>
+  <img id="large" alt="">
+  <button class="next" aria-label="Next">›</button>
+</div>
+<script>
+const perPage=18;
+const data={
+  frontpage:Array.from({length:100},(_,i)=>`fp${String(i+1).padStart(3,'0')}.jpg`),
+  dots:Array.from({length:34},(_,i)=>`dots${String(i+1).padStart(3,'0')}.jpg`),
+  soft:Array.from({length:10},(_,i)=>`soft${String(i+1).padStart(3,'0')}.jpg`)
+};
+const grid=document.querySelector('#grid'),pages=document.querySelector('#pages'),
+lb=document.querySelector('#lightbox'),large=document.querySelector('#large');
+let state={cat:'frontpage',page:1,image:null};
+
+function parse(){
+  const p=new URLSearchParams(location.hash.slice(1));
+  let cat=(p.get('category')||'frontpage').toLowerCase();
+  if(!data[cat]) cat='frontpage';
+  let page=Math.max(1,parseInt(p.get('page')||1,10));
+  let image=p.has('image')?parseInt(p.get('image'),10):null;
+  state={cat,page,image};
+}
+function setHash(extra={}){
+  const s={...state,...extra};
+  let h=`category=${s.cat}&page=${s.page}`;
+  if(s.image!==null) h+=`&image=${s.image}`;
+  location.hash=h;
+}
+function render(){
+  parse();
+  const imgs=data[state.cat], max=Math.max(1,Math.ceil(imgs.length/perPage));
+  state.page=Math.min(state.page,max);
+  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.dataset.cat===state.cat));
+  grid.innerHTML='';
+  const start=(state.page-1)*perPage;
+  imgs.slice(start,start+perPage).forEach((src,j)=>{
+    const idx=start+j, d=document.createElement('div');
+    d.className='tile';
+    d.innerHTML=`<img src="${src}" loading="lazy" alt="">`;
+    d.onclick=()=>setHash({image:idx});
+    grid.appendChild(d);
+  });
+  pages.innerHTML='';
+  for(let i=1;i<=max;i++){
+    const a=document.createElement('a');
+    a.textContent=i;
+    a.className=i===state.page?'active':'';
+    a.onclick=()=>setHash({page:i,image:null});
+    pages.appendChild(a);
+    if(i<max) pages.append('_');
+  }
+  if(state.image!==null && imgs[state.image]){
+    large.src=imgs[state.image];
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden','false');
+  }else{
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden','true');
+    large.src='';
+  }
+}
+document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>setHash({cat:a.dataset.cat,page:1,image:null}));
+document.querySelector('.brand').onclick=e=>{e.preventDefault();setHash({cat:'frontpage',page:1,image:null})};
+document.querySelector('.close').onclick=()=>setHash({image:null});
+document.querySelector('.prev').onclick=()=>{if(state.image>0)setHash({image:state.image-1})};
+document.querySelector('.next').onclick=()=>{if(state.image<data[state.cat].length-1)setHash({image:state.image+1})};
+lb.onclick=e=>{if(e.target===lb)setHash({image:null})};
+document.addEventListener('keydown',e=>{
+  if(state.image===null)return;
+  if(e.key==='Escape')setHash({image:null});
+  if(e.key==='ArrowLeft'&&state.image>0)setHash({image:state.image-1});
+  if(e.key==='ArrowRight'&&state.image<data[state.cat].length-1)setHash({image:state.image+1});
+});
+window.addEventListener('hashchange',render);
+if(!location.hash)setHash({});else render();
+</script>
+</body>
+</html>
