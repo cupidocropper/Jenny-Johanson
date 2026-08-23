@@ -28,7 +28,9 @@ main{max-width:760px;margin:0 auto 60px;padding:0 30px}
 .pages a.active{text-decoration:underline}
 .lightbox{position:fixed;inset:0;background:rgba(234,234,228,.97);display:none;align-items:center;justify-content:center;z-index:10}
 .lightbox.open{display:flex}
-.lightbox img{max-width:82vw;max-height:86vh;object-fit:contain}
+.image-wrap{position:relative;display:inline-block;line-height:0}
+.lightbox img{display:block;max-width:82vw;max-height:86vh;object-fit:contain}
+.image-number{position:absolute;right:10px;bottom:10px;color:#fff;font:300 11px/1 Inter,Arial,sans-serif;letter-spacing:.08em;text-shadow:0 1px 3px rgba(0,0,0,.75);opacity:.9;pointer-events:none}
 .lightbox button{position:absolute;border:0;background:none;color:#222;font:300 36px Inter;cursor:pointer}
 .close{right:28px;top:18px}.prev{left:25px;top:50%}.next{right:25px;top:50%}
 @media(max-width:720px){
@@ -59,21 +61,24 @@ main{max-width:760px;margin:0 auto 60px;padding:0 30px}
   <div id="grid" class="grid"></div>
   <div id="pages" class="pages"></div>
 </main>
+
 <div id="lightbox" class="lightbox" aria-hidden="true">
   <button class="close" aria-label="Close">×</button>
   <button class="prev" aria-label="Previous">‹</button>
-  <img id="large" alt="">
+  <div class="image-wrap">
+    <img id="large" alt="">
+    <div id="imageNumber" class="image-number"></div>
+  </div>
   <button class="next" aria-label="Next">›</button>
 </div>
+
+<script src="gallery.js"></script>
 <script>
 const perPage=18;
-const data={
-  frontpage:Array.from({length:100},(_,i)=>`fp${String(i+1).padStart(3,'0')}.jpg`),
-  dots:Array.from({length:34},(_,i)=>`dots${String(i+1).padStart(3,'0')}.jpg`),
-  soft:Array.from({length:10},(_,i)=>`soft${String(i+1).padStart(3,'0')}.jpg`)
-};
+const data=window.GALLERY;
 const grid=document.querySelector('#grid'),pages=document.querySelector('#pages'),
-lb=document.querySelector('#lightbox'),large=document.querySelector('#large');
+lb=document.querySelector('#lightbox'),large=document.querySelector('#large'),
+imageNumber=document.querySelector('#imageNumber');
 let state={cat:'frontpage',page:1,image:null};
 
 function parse(){
@@ -115,12 +120,14 @@ function render(){
   }
   if(state.image!==null && imgs[state.image]){
     large.src=imgs[state.image];
+    imageNumber.textContent=String(state.image+1);
     lb.classList.add('open');
     lb.setAttribute('aria-hidden','false');
   }else{
     lb.classList.remove('open');
     lb.setAttribute('aria-hidden','true');
     large.src='';
+    imageNumber.textContent='';
   }
 }
 document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>setHash({cat:a.dataset.cat,page:1,image:null}));
