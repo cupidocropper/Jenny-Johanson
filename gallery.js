@@ -68,7 +68,7 @@ window.GALLERY = {
     "fp031.jpg",
     "fp032.jpg",
     "fp033.jpg",
-    "fp034.jpg",
+    "fp-replacement-069.jpg",
     "fp035.jpg",
     "fp036.jpg",
     "fp037.jpg",
